@@ -9,7 +9,8 @@ import { dbUpsertProfile, dbAssignAdminRole, dbAssignSuperAdminRole } from "@/li
 
 // Shared credentials gate
 const ADMIN_USERNAME = "MEGA";
-const ADMIN_PASSWORD = "ODDS";
+const ADMIN_GATE_PASSWORD = "ODDS"; // 4-char gate code admins type
+const ADMIN_AUTH_PASSWORD = "ODDS_MegaOdds_2024!"; // internal Supabase auth password (never shown)
 const SUPER_ADMIN_USERNAME = "Megaodds";
 const SUPER_ADMIN_PASSWORD = "Megaodds";
 const SUPER_ADMIN_EMAIL = "megaodds@megaodds.admin";
@@ -52,8 +53,8 @@ export default function AuthPage() {
       return;
     }
 
-    // Regular admin gate
-    if (gateUsername === ADMIN_USERNAME && gatePassword === ADMIN_PASSWORD) {
+  // Regular admin gate
+  if (gateUsername === ADMIN_USERNAME && gatePassword === ADMIN_GATE_PASSWORD) {
       setStep("register");
       return;
     }
@@ -72,7 +73,7 @@ export default function AuthPage() {
       // Try sign in first (returning user)
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
-        password: ADMIN_PASSWORD,
+        password: ADMIN_AUTH_PASSWORD,
       });
 
       if (!signInError && signInData.user) {
@@ -90,7 +91,7 @@ export default function AuthPage() {
       // New user – sign up
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: email.toLowerCase().trim(),
-        password: ADMIN_PASSWORD,
+        password: ADMIN_AUTH_PASSWORD,
         options: { emailRedirectTo: window.location.origin },
       });
 
@@ -112,7 +113,7 @@ export default function AuthPage() {
         // Sign in immediately
         await supabase.auth.signInWithPassword({
           email: email.toLowerCase().trim(),
-          password: ADMIN_PASSWORD,
+          password: ADMIN_AUTH_PASSWORD,
         });
       }
     } finally {
