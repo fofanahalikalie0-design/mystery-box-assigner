@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Package, Loader2, Eye, EyeOff, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
-import { dbUpsertProfile, dbAssignAdminRole } from "@/lib/db";
+import { dbUpsertProfile, dbAssignAdminRole, dbAssignSuperAdminRole } from "@/lib/db";
 
 // Shared credentials gate
 const ADMIN_USERNAME = "MEGA";

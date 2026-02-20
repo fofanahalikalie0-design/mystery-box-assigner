@@ -125,6 +125,10 @@ export type Database = {
         Args: { p_admin_id: string; p_category_id: string }
         Returns: Json
       }
+      assign_super_admin_role: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       get_all_admin_assignments: {
         Args: never
         Returns: {
