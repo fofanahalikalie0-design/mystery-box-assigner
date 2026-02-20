@@ -19,6 +19,13 @@ export async function dbAssignSuperAdminRole(userId: string) {
   return await (supabase.rpc as Function)("assign_super_admin_role", { p_user_id: userId });
 }
 
+export async function dbAssignCategoryToAdmin(adminId: string, categoryId: string) {
+  return await supabase.rpc("assign_category_to_admin", {
+    p_admin_id: adminId,
+    p_category_id: categoryId,
+  });
+}
+
 export async function dbGetAllAdminAssignments() {
   return await (supabase.rpc as Function)("get_all_admin_assignments");
 }

@@ -43,34 +43,33 @@ export default function Dashboard() {
 
   const canPick = assignedCategories.length < 2;
 
-  // 20-minute window to pick (only counts while canPick)
-  const pickTimer = useCountdown(PICK_WINDOW_SECONDS, async () => {
+  // 20-minute window to pick
+  const pickTimer = useCountdown(PICK_WINDOW_SECONDS, true, async () => {
     if (canPick) {
       toast.error("⏰ Time is up! You have been logged out.");
       await supabase.auth.signOut();
     }
   });
 
-  // 5-minute logout timer after done
-  const logoutTimer = useCountdown(LOGOUT_AFTER_DONE_SECONDS, async () => {
+  // 5-minute logout timer after done (starts paused)
+  const logoutTimer = useCountdown(LOGOUT_AFTER_DONE_SECONDS, false, async () => {
     await supabase.auth.signOut();
   });
 
-  // Start/stop timers based on state
+  // When all done: stop pick timer, start logout timer
   useEffect(() => {
     if (allDone) {
       pickTimer.stop();
+      logoutTimer.start();
     }
   }, [allDone]);
 
   useEffect(() => {
-    if (!canPick && !loading && assignedCategories.length === 2) {
-      if (!allDone) {
-        setAllDone(true);
-        setShowDoneMessage(true);
-      }
+    if (!canPick && !loading && assignedCategories.length === 2 && !allDone) {
+      setAllDone(true);
+      setShowDoneMessage(true);
     }
-  }, [canPick, loading, assignedCategories.length]);
+  }, [canPick, loading, assignedCategories.length, allDone]);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -171,9 +170,9 @@ export default function Dashboard() {
               <div className={cn(
                 "flex items-center gap-1.5 text-xs font-mono font-semibold px-3 py-1.5 rounded-full border",
                 pickTimer.formatted.isVeryLow
-                  ? "border-destructive/50 bg-destructive/10 text-destructive"
+                  ? "border-destructive/50 bg-destructive/10 text-destructive animate-pulse"
                   : pickTimer.formatted.isLow
-                  ? "border-yellow-500/50 bg-yellow-500/10 text-yellow-400"
+                  ? "border-warning/50 bg-warning/10 text-warning"
                   : "border-primary/30 bg-primary/10 text-primary"
               )}>
                 <Clock className="w-3 h-3" />
@@ -181,7 +180,7 @@ export default function Dashboard() {
               </div>
             )}
             {allDone && !canPick && (
-              <div className="flex items-center gap-1.5 text-xs font-mono font-semibold px-3 py-1.5 rounded-full border border-yellow-500/30 bg-yellow-500/10 text-yellow-400">
+              <div className="flex items-center gap-1.5 text-xs font-mono font-semibold px-3 py-1.5 rounded-full border border-warning/40 bg-warning/10 text-warning">
                 <Clock className="w-3 h-3" />
                 Logging out in {logoutTimer.formatted.display}
               </div>

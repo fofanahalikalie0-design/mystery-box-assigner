@@ -1,38 +1,52 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-export function useCountdown(initialSeconds: number, onExpire?: () => void) {
+export function useCountdown(initialSeconds: number, autoStart = true, onExpire?: () => void) {
   const [seconds, setSeconds] = useState(initialSeconds);
-  const [isRunning, setIsRunning] = useState(true);
+  const [isRunning, setIsRunning] = useState(autoStart);
   const onExpireRef = useRef(onExpire);
   onExpireRef.current = onExpire;
+  const runningRef = useRef(autoStart);
+
+  useEffect(() => {
+    runningRef.current = isRunning;
+  }, [isRunning]);
 
   useEffect(() => {
     if (!isRunning) return;
-    if (seconds <= 0) {
-      setIsRunning(false);
-      onExpireRef.current?.();
-      return;
-    }
+
     const interval = setInterval(() => {
+      if (!runningRef.current) {
+        clearInterval(interval);
+        return;
+      }
       setSeconds((s) => {
         if (s <= 1) {
           clearInterval(interval);
+          runningRef.current = false;
           setIsRunning(false);
-          onExpireRef.current?.();
+          setTimeout(() => onExpireRef.current?.(), 0);
           return 0;
         }
         return s - 1;
       });
     }, 1000);
+
     return () => clearInterval(interval);
-  }, [isRunning, seconds]);
+  }, [isRunning]);
+
+  const start = useCallback(() => {
+    setSeconds(initialSeconds);
+    setIsRunning(true);
+  }, [initialSeconds]);
 
   const reset = useCallback((newSeconds?: number) => {
     setSeconds(newSeconds ?? initialSeconds);
     setIsRunning(true);
   }, [initialSeconds]);
 
-  const stop = useCallback(() => setIsRunning(false), []);
+  const stop = useCallback(() => {
+    setIsRunning(false);
+  }, []);
 
   const formatted = {
     minutes: Math.floor(seconds / 60),
@@ -43,5 +57,6 @@ export function useCountdown(initialSeconds: number, onExpire?: () => void) {
     seconds,
   };
 
-  return { formatted, reset, stop, isRunning };
+  return { formatted, reset, start, stop, isRunning };
 }
+
