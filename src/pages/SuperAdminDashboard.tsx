@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Package, LogOut, Loader2, Plus, Pencil, Trash2,
-  Users, BarChart3, ShieldCheck, Search, Check, X, RefreshCw
+  Users, ShieldCheck, Search, Check, X, RefreshCw,
+  Sun, Moon, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -38,15 +39,29 @@ interface AdminSummary {
   categories: { id: string; name: string; revealed_at: string }[];
 }
 
-type Tab = "overview" | "categories";
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="w-9 h-9 p-0 text-muted-foreground hover:text-foreground"
+      aria-label="Toggle theme"
+    >
+      <Sun className="w-4 h-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute w-4 h-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+    </Button>
+  );
+}
 
 export default function SuperAdminDashboard() {
-  const [tab, setTab] = useState<Tab>("overview");
   const [categories, setCategories] = useState<Category[]>([]);
   const [admins, setAdmins] = useState<AdminSummary[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Category form state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,8 +90,6 @@ export default function SuperAdminDashboard() {
     try {
       const { data, error } = await dbGetAllAdminAssignments();
       if (error) throw error;
-
-      // Group rows by admin
       const map = new Map<string, AdminSummary>();
       ((data as AdminAssignment[]) || []).forEach((row) => {
         if (!map.has(row.admin_user_id)) {
@@ -115,9 +128,7 @@ export default function SuperAdminDashboard() {
     if (!newCatName.trim()) return;
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("categories")
-        .insert({ name: newCatName.trim() });
+      const { error } = await supabase.from("categories").insert({ name: newCatName.trim() });
       if (error) throw error;
       setNewCatName("");
       toast.success("Category added!");
@@ -171,82 +182,208 @@ export default function SuperAdminDashboard() {
   const fullyAssigned = admins.filter((a) => a.categories.length >= 2).length;
 
   return (
-    <div className="min-h-screen grid-bg">
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4 text-primary" />
+    <div className="min-h-screen flex w-full bg-background">
+      {/* ── Categories Sidebar ── */}
+      <aside
+        className={cn(
+          "relative flex flex-col border-r border-border bg-sidebar transition-all duration-300 shrink-0",
+          sidebarOpen ? "w-72" : "w-14"
+        )}
+      >
+        {/* Sidebar header */}
+        <div className="flex items-center justify-between h-16 px-3 border-b border-sidebar-border">
+          {sidebarOpen && (
+            <div className="flex items-center gap-2 overflow-hidden">
+              <Package className="w-4 h-4 text-sidebar-primary shrink-0" />
+              <span className="font-semibold text-sm text-sidebar-foreground truncate">Categories</span>
+              <span className="ml-1 text-xs bg-sidebar-primary/10 text-sidebar-primary border border-sidebar-primary/30 rounded-full px-1.5 py-0.5 font-medium">
+                {categories.length}
+              </span>
             </div>
-            <span className="font-bold text-lg text-primary">MegaOdds</span>
-            <span className="text-xs bg-primary/10 border border-primary/30 text-primary rounded-full px-2 py-0.5 font-medium">
-              Super Admin
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            className="text-muted-foreground hover:text-foreground gap-1.5"
+          )}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={cn(
+              "w-7 h-7 rounded-md flex items-center justify-center text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors shrink-0",
+              !sidebarOpen && "mx-auto"
+            )}
           >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Sign Out</span>
-          </Button>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-        {/* Page title */}
-        <div className="float-in">
-          <h1 className="text-3xl font-bold">
-            <span className="text-glow text-primary">Admin</span>{" "}Control Panel
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage categories and view admin assignments</p>
+            {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </button>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 float-in">
-          {[
-            { label: "Total Categories", value: categories.length, icon: Package },
-            { label: "Assigned", value: totalAssigned, icon: Check },
-            { label: "Available", value: totalAvailable, icon: Package },
-            { label: "Admins Done", value: `${fullyAssigned}/${admins.length}`, icon: Users },
-          ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="bg-card border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-              </div>
-              <div className="text-2xl font-bold text-primary">{value}</div>
+        {/* Add category form */}
+        {sidebarOpen && (
+          <div className="px-3 py-3 border-b border-sidebar-border">
+            <form onSubmit={handleAddCategory} className="flex gap-1.5">
+              <Input
+                placeholder="New category..."
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                className="h-8 text-sm bg-sidebar-accent border-sidebar-border"
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={saving || !newCatName.trim()}
+                className="h-8 w-8 p-0 bg-sidebar-primary text-sidebar-primary-foreground shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </Button>
+            </form>
+          </div>
+        )}
+
+        {/* Category list */}
+        <div className="flex-1 overflow-y-auto py-2">
+          {loadingCats ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-5 h-5 text-sidebar-primary animate-spin" />
             </div>
-          ))}
-        </div>
+          ) : categories.length === 0 ? (
+            sidebarOpen ? (
+              <div className="text-center py-8 px-3 text-sidebar-foreground/40 text-xs">
+                No categories yet
+              </div>
+            ) : null
+          ) : (
+            categories.map((cat) => (
+              <div
+                key={cat.id}
+                className={cn(
+                  "group flex items-center gap-2 px-3 py-2 mx-1 rounded-lg transition-colors",
+                  cat.is_assigned
+                    ? "text-sidebar-primary"
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent"
+                )}
+              >
+                {/* Status dot */}
+                <div
+                  className={cn(
+                    "w-2 h-2 rounded-full shrink-0",
+                    cat.is_assigned ? "bg-sidebar-primary" : "bg-sidebar-foreground/30"
+                  )}
+                />
+                {sidebarOpen && (
+                  <>
+                    {editingId === cat.id ? (
+                      <Input
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        autoFocus
+                        className="h-6 text-xs flex-1 bg-sidebar-accent border-sidebar-border py-0 px-1"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveEdit(cat.id);
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
+                      />
+                    ) : (
+                      <span className="text-xs flex-1 truncate font-medium">{cat.name}</span>
+                    )}
 
-        {/* Tabs */}
-        <div className="flex rounded-lg bg-muted p-1 w-fit">
-          {([
-            { id: "overview", label: "Admin Overview", icon: Users },
-            { id: "categories", label: "Categories", icon: BarChart3 },
-          ] as { id: Tab; label: string; icon: typeof Users }[]).map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all",
-                tab === id
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
+                    {/* Actions */}
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      {editingId === cat.id ? (
+                        <>
+                          <button
+                            onClick={() => handleSaveEdit(cat.id)}
+                            className="p-1 rounded text-sidebar-primary hover:bg-sidebar-accent"
+                            disabled={saving}
+                          >
+                            <Check className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="p-1 rounded text-sidebar-foreground/60 hover:bg-sidebar-accent"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
+                            className="p-1 rounded text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(cat.id, cat.name)}
+                            disabled={cat.is_assigned}
+                            className="p-1 rounded text-sidebar-foreground/40 hover:text-destructive hover:bg-sidebar-accent disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            ))
+          )}
         </div>
+      </aside>
 
-        {/* Overview Tab */}
-        {tab === "overview" && (
+      {/* ── Main content ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="px-6 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+              </div>
+              <span className="font-bold text-lg text-primary">MegaOdds</span>
+              <span className="text-xs bg-primary/10 border border-primary/30 text-primary rounded-full px-2 py-0.5 font-medium">
+                Super Admin
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="text-muted-foreground hover:text-foreground gap-1.5"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 px-6 py-8 space-y-6 overflow-y-auto">
+          {/* Page title */}
+          <div className="float-in">
+            <h1 className="text-3xl font-bold">
+              <span className="text-glow text-primary">Admin</span>{" "}Overview
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              View all admin assignments and category statistics
+            </p>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 float-in">
+            {[
+              { label: "Total Categories", value: categories.length, icon: Package },
+              { label: "Assigned", value: totalAssigned, icon: Check },
+              { label: "Available", value: totalAvailable, icon: Package },
+              { label: "Admins Done", value: `${fullyAssigned}/${admins.length}`, icon: Users },
+            ].map(({ label, value, icon: Icon }) => (
+              <div key={label} className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                </div>
+                <div className="text-2xl font-bold text-primary">{value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Admin list */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="relative flex-1 max-w-sm">
@@ -258,14 +395,21 @@ export default function SuperAdminDashboard() {
                   className="pl-9 bg-muted border-border"
                 />
               </div>
-              <Button variant="ghost" size="sm" onClick={fetchAdmins} className="gap-1.5 text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { fetchAdmins(); fetchCategories(); }}
+                className="gap-1.5 text-muted-foreground"
+              >
                 <RefreshCw className="w-3.5 h-3.5" />
                 Refresh
               </Button>
             </div>
 
             {loadingAdmins ? (
-              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+              <div className="flex justify-center py-16">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              </div>
             ) : filteredAdmins.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -317,110 +461,8 @@ export default function SuperAdminDashboard() {
               </div>
             )}
           </div>
-        )}
-
-        {/* Categories Tab */}
-        {tab === "categories" && (
-          <div className="space-y-4">
-            {/* Add category form */}
-            <form onSubmit={handleAddCategory} className="flex gap-2">
-              <Input
-                placeholder="New category name..."
-                value={newCatName}
-                onChange={(e) => setNewCatName(e.target.value)}
-                className="bg-muted border-border flex-1 max-w-sm"
-              />
-              <Button type="submit" disabled={saving || !newCatName.trim()} className="gap-1.5 bg-primary text-primary-foreground">
-                <Plus className="w-4 h-4" />
-                Add
-              </Button>
-            </form>
-
-            {loadingCats ? (
-              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
-            ) : categories.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No categories yet. Add one above.</p>
-              </div>
-            ) : (
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="grid grid-cols-[1fr_auto_auto] gap-0 text-xs font-semibold text-muted-foreground uppercase tracking-widest px-4 py-2 border-b border-border">
-                  <span>Name</span>
-                  <span className="px-4">Status</span>
-                  <span>Actions</span>
-                </div>
-                {categories.map((cat, i) => (
-                  <div
-                    key={cat.id}
-                    className={cn(
-                      "grid grid-cols-[1fr_auto_auto] items-center gap-0 px-4 py-3",
-                      i !== 0 && "border-t border-border/50"
-                    )}
-                  >
-                    {editingId === cat.id ? (
-                      <Input
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
-                        autoFocus
-                        className="bg-muted border-border h-8 text-sm"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveEdit(cat.id);
-                          if (e.key === "Escape") setEditingId(null);
-                        }}
-                      />
-                    ) : (
-                      <span className="text-sm font-medium">{cat.name}</span>
-                    )}
-
-                    <div className="px-4">
-                      <span className={cn(
-                        "text-xs rounded-full px-2 py-0.5 font-medium border",
-                        cat.is_assigned
-                          ? "bg-primary/10 border-primary/30 text-primary"
-                          : "bg-muted border-border text-muted-foreground"
-                      )}>
-                        {cat.is_assigned ? "Assigned" : "Available"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      {editingId === cat.id ? (
-                        <>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-primary" onClick={() => handleSaveEdit(cat.id)} disabled={saving}>
-                            <Check className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground" onClick={() => setEditingId(null)}>
-                            <X className="w-3.5 h-3.5" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            size="sm" variant="ghost"
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                            onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            size="sm" variant="ghost"
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => handleDelete(cat.id, cat.name)}
-                            disabled={cat.is_assigned}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
