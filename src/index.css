@@ -3,7 +3,57 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Light theme (default) ── */
   :root {
+    --background: 0 0% 98%;
+    --foreground: 222 20% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 20% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 20% 12%;
+
+    --primary: 175 80% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 16% 93%;
+    --secondary-foreground: 222 20% 20%;
+
+    --muted: 210 16% 93%;
+    --muted-foreground: 215 16% 45%;
+
+    --accent: 175 60% 90%;
+    --accent-foreground: 175 80% 25%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 16% 87%;
+    --input: 214 16% 87%;
+    --ring: 175 80% 35%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --glow-primary: 175 80% 35%;
+    --box-mystery: 210 20% 96%;
+    --box-mystery-hover: 210 20% 90%;
+    --box-revealed: 175 30% 92%;
+    --gold: 43 96% 50%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 20% 12%;
+    --sidebar-primary: 175 80% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 16% 93%;
+    --sidebar-accent-foreground: 222 20% 20%;
+    --sidebar-border: 214 16% 87%;
+    --sidebar-ring: 175 80% 35%;
+  }
+
+  /* ── Dark theme ── */
+  .dark {
     --background: 220 20% 7%;
     --foreground: 210 40% 96%;
 
@@ -32,9 +82,6 @@
     --input: 220 16% 16%;
     --ring: 175 80% 45%;
 
-    --radius: 0.75rem;
-
-    /* Custom tokens */
     --glow-primary: 175 80% 45%;
     --box-mystery: 220 16% 13%;
     --box-mystery-hover: 220 18% 17%;
@@ -110,8 +157,8 @@
 /* Animated grid background */
 .grid-bg {
   background-image: 
-    linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    linear-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.6) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
