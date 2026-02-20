@@ -6,13 +6,14 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/context/AuthContext";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { user, loading } = useAuthContext();
+  const { user, isSuperAdmin, loading } = useAuthContext();
 
   if (loading) {
     return (
@@ -26,11 +27,27 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/"
-        element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />}
+        element={
+          !user ? <AuthPage /> :
+          isSuperAdmin ? <Navigate to="/super-admin" replace /> :
+          <Navigate to="/dashboard" replace />
+        }
       />
       <Route
         path="/dashboard"
-        element={user ? <Dashboard /> : <Navigate to="/" replace />}
+        element={
+          !user ? <Navigate to="/" replace /> :
+          isSuperAdmin ? <Navigate to="/super-admin" replace /> :
+          <Dashboard />
+        }
+      />
+      <Route
+        path="/super-admin"
+        element={
+          !user ? <Navigate to="/" replace /> :
+          !isSuperAdmin ? <Navigate to="/dashboard" replace /> :
+          <SuperAdminDashboard />
+        }
       />
       <Route path="*" element={<NotFound />} />
     </Routes>
