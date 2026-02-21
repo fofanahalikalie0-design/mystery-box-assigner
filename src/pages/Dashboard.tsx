@@ -288,7 +288,7 @@ export default function Dashboard() {
                   const isRevealedByMe = !!revealedBoxes[cat.id];
                   const isTakenByOther = cat.is_assigned && !isRevealedByMe;
                   return (
-                    <div key={cat.id} className="float-in" style={{ animationDelay: `${index * 0.04}s` }}>
+                    <div key={cat.id}>
                       <MysteryBox
                         categoryId={cat.id}
                         categoryName={revealedBoxes[cat.id]}
