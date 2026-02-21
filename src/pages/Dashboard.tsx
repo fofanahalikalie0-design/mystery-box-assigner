@@ -6,6 +6,7 @@ import { AssignedCategories } from "@/components/AssignedCategories";
 import { Button } from "@/components/ui/button";
 import { Package, LogOut, Loader2, RefreshCw, Clock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCountdown } from "@/hooks/useCountdown";
 import { cn } from "@/lib/utils";
 
@@ -164,7 +165,7 @@ export default function Dashboard() {
             <span className="font-bold text-lg text-primary">MegaOdds</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Countdown timers */}
             {canPick && !loading && (
               <div className={cn(
@@ -185,6 +186,7 @@ export default function Dashboard() {
                 Logging out in {logoutTimer.formatted.display}
               </div>
             )}
+            <ThemeToggle />
             <span className="text-sm text-muted-foreground hidden sm:block truncate max-w-[160px]">
               {profile?.first_name} {profile?.last_name}
             </span>

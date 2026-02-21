@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useTheme } from "next-themes";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,21 +39,7 @@ interface AdminSummary {
   categories: { id: string; name: string; revealed_at: string }[];
 }
 
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="w-9 h-9 p-0 text-muted-foreground hover:text-foreground"
-      aria-label="Toggle theme"
-    >
-      <Sun className="w-4 h-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute w-4 h-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-    </Button>
-  );
-}
+// ThemeToggle moved to src/components/ThemeToggle.tsx
 
 export default function SuperAdminDashboard() {
   const [categories, setCategories] = useState<Category[]>([]);
