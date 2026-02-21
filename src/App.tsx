@@ -8,6 +8,7 @@ import { AuthProvider, useAuthContext } from "@/context/AuthContext";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -29,6 +30,14 @@ function AppRoutes() {
       <Route
         path="/"
         element={
+          !user ? <LandingPage /> :
+          isSuperAdmin ? <Navigate to="/super-admin" replace /> :
+          <Navigate to="/dashboard" replace />
+        }
+      />
+      <Route
+        path="/login"
+        element={
           !user ? <AuthPage /> :
           isSuperAdmin ? <Navigate to="/super-admin" replace /> :
           <Navigate to="/dashboard" replace />
@@ -37,7 +46,7 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          !user ? <Navigate to="/" replace /> :
+          !user ? <Navigate to="/login" replace /> :
           isSuperAdmin ? <Navigate to="/super-admin" replace /> :
           <Dashboard />
         }
@@ -45,7 +54,7 @@ function AppRoutes() {
       <Route
         path="/super-admin"
         element={
-          !user ? <Navigate to="/" replace /> :
+          !user ? <Navigate to="/login" replace /> :
           !isSuperAdmin ? <Navigate to="/dashboard" replace /> :
           <SuperAdminDashboard />
         }

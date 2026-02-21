@@ -4,7 +4,7 @@ import { useAuthContext } from "@/context/AuthContext";
 import { MysteryBox } from "@/components/MysteryBox";
 import { AssignedCategories } from "@/components/AssignedCategories";
 import { Button } from "@/components/ui/button";
-import { Package, LogOut, Loader2, RefreshCw, Clock, CheckCircle2 } from "lucide-react";
+import { LogOut, Loader2, RefreshCw, Clock, CheckCircle2, Package } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCountdown } from "@/hooks/useCountdown";
@@ -159,8 +159,8 @@ export default function Dashboard() {
       <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
-              <Package className="w-4 h-4 text-primary" />
+            <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-black text-sm select-none">
+              M
             </div>
             <span className="font-bold text-lg text-primary">MegaOdds</span>
           </div>
