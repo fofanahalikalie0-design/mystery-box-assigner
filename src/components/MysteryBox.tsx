@@ -33,7 +33,7 @@ export function MysteryBox({
         isRevealed && "flipped",
         !isRevealed && !isAssigned && canPick && "pulse-glow hover:scale-105 transition-transform duration-200"
       )}
-      style={{ animationDelay: `${index * 0.05}s` }}
+      
       onClick={handleClick}
       role={!isRevealed && !isAssigned && canPick ? "button" : undefined}
       aria-label={isRevealed ? `Revealed: ${categoryName}` : "Mystery box – click to reveal"}
