@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Package, Loader2, Eye, EyeOff, ShieldCheck, User } from "lucide-react";
+import { Loader2, Eye, EyeOff, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
 import { dbUpsertProfile, dbAssignAdminRole, dbAssignSuperAdminRole } from "@/lib/db";
 
@@ -131,8 +131,8 @@ export default function AuthPage() {
       <div className="w-full max-w-md relative z-10 float-in">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 glow-primary mb-4">
-            <Package className="w-8 h-8 text-primary" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-primary-foreground glow-primary mb-4">
+            <span className="text-3xl font-black select-none">M</span>
           </div>
           <h1 className="text-3xl font-bold text-glow text-primary">MegaOdds</h1>
           <p className="text-muted-foreground mt-1 text-sm">Category Assignment Portal</p>
