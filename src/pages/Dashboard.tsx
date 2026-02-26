@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/context/AuthContext";
 import { MysteryBox } from "@/components/MysteryBox";
+import { MysteryBoxSkeleton } from "@/components/MysteryBoxSkeleton";
 import { AssignedCategories } from "@/components/AssignedCategories";
 import { Button } from "@/components/ui/button";
 import { LogOut, Loader2, RefreshCw, Clock, CheckCircle2, Package } from "lucide-react";
@@ -260,9 +261,7 @@ export default function Dashboard() {
 
         {/* Mystery boxes grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          </div>
+          <MysteryBoxSkeleton count={10} />
         ) : (
           <div>
             {canPick && (
