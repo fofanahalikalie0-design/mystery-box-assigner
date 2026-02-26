@@ -19,6 +19,9 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button onClick={() => navigate("/vote")} variant="ghost" size="sm">
+              Vote
+            </Button>
             <Button onClick={() => navigate("/login")} variant="outline" size="sm">
               Admin Login
             </Button>
