@@ -9,6 +9,7 @@ import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import LandingPage from "./pages/LandingPage";
+import VotingPage from "./pages/VotingPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -58,6 +59,10 @@ function AppRoutes() {
           !isSuperAdmin ? <Navigate to="/dashboard" replace /> :
           <SuperAdminDashboard />
         }
+      />
+      <Route
+        path="/vote"
+        element={!user ? <Navigate to="/login" replace /> : <VotingPage />}
       />
       <Route path="*" element={<NotFound />} />
     </Routes>

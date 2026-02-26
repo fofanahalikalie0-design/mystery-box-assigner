@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import {
   Package, LogOut, Loader2, Plus, Pencil, Trash2,
   Users, ShieldCheck, Search, Check, X, RefreshCw,
-  Sun, Moon, ChevronLeft, ChevronRight,
+  Sun, Moon, ChevronLeft, ChevronRight, Vote, UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { dbGetAllAdminAssignments } from "@/lib/db";
+import { ElectionManager } from "@/components/voting/ElectionManager";
+import { VoterApprovalManager } from "@/components/voting/VoterApprovalManager";
 
 interface Category {
   id: string;
@@ -48,6 +50,7 @@ export default function SuperAdminDashboard() {
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<"overview" | "elections" | "approvals">("overview");
 
   // Category form state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -341,6 +344,29 @@ export default function SuperAdminDashboard() {
         </header>
 
         <main className="flex-1 px-6 py-8 space-y-6 overflow-y-auto">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+            {([
+              { key: "overview", label: "Overview", icon: Users },
+              { key: "elections", label: "Elections", icon: Vote },
+              { key: "approvals", label: "Approvals", icon: UserCheck },
+            ] as const).map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                  activeTab === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === "overview" && (
+          <>
           {/* Page title */}
           <div className="float-in">
             <h1 className="text-3xl font-bold">
@@ -447,6 +473,28 @@ export default function SuperAdminDashboard() {
               </div>
             )}
           </div>
+          </>
+          )}
+
+          {activeTab === "elections" && (
+            <div className="float-in">
+              <h1 className="text-3xl font-bold mb-1">
+                <span className="text-glow text-primary">Elections</span>{" "}Management
+              </h1>
+              <p className="text-muted-foreground text-sm mb-6">Create and manage voting polls with candidates</p>
+              <ElectionManager />
+            </div>
+          )}
+
+          {activeTab === "approvals" && (
+            <div className="float-in">
+              <h1 className="text-3xl font-bold mb-1">
+                <span className="text-glow text-primary">Voter</span>{" "}Approvals
+              </h1>
+              <p className="text-muted-foreground text-sm mb-6">Approve or reject users requesting to vote</p>
+              <VoterApprovalManager />
+            </div>
+          )}
         </main>
       </div>
     </div>
