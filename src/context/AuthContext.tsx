@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   isSuperAdmin: boolean;
+  isModerator: boolean;
   loading: boolean;
 }
 
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   isSuperAdmin: false,
+  isModerator: false,
   loading: true,
 });
 
@@ -30,11 +32,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isModerator, setIsModerator] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfileAndRole = async (userId: string) => {
     try {
-      const [profileRes, roleRes] = await Promise.all([
+      const [profileRes, rolesRes] = await Promise.all([
         supabase
           .from("profiles")
           .select("first_name, last_name, email, whatsapp")
@@ -43,14 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", userId)
-          .maybeSingle(),
+          .eq("user_id", userId),
       ]);
       setProfile(profileRes.data ?? null);
-      setIsSuperAdmin(roleRes.data?.role === "super_admin");
+      const roles = (rolesRes.data || []).map((r) => r.role);
+      setIsSuperAdmin(roles.includes("super_admin"));
+      setIsModerator(roles.includes("moderator"));
     } catch {
       setProfile(null);
       setIsSuperAdmin(false);
+      setIsModerator(false);
     }
   };
 
@@ -63,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setIsSuperAdmin(false);
+        setIsModerator(false);
       }
       setLoading(false);
     });
@@ -80,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, isSuperAdmin, loading }}>
+    <AuthContext.Provider value={{ session, user, profile, isSuperAdmin, isModerator, loading }}>
       {children}
     </AuthContext.Provider>
   );

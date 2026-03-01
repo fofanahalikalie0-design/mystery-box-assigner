@@ -1,18 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Package, LogOut, Loader2, Plus, Pencil, Trash2,
   Users, ShieldCheck, Search, Check, X, RefreshCw,
-  Sun, Moon, ChevronLeft, ChevronRight, Vote, UserCheck,
+  ChevronLeft, ChevronRight, Vote, UserCheck, Settings, Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { dbGetAllAdminAssignments } from "@/lib/db";
 import { ElectionManager } from "@/components/voting/ElectionManager";
 import { VoterApprovalManager } from "@/components/voting/VoterApprovalManager";
+import { ModeratorManager } from "@/components/admin/ModeratorManager";
+import { SiteSettingsManager } from "@/components/admin/SiteSettingsManager";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 interface Category {
   id: string;
@@ -41,16 +45,19 @@ interface AdminSummary {
   categories: { id: string; name: string; revealed_at: string }[];
 }
 
-// ThemeToggle moved to src/components/ThemeToggle.tsx
-
 export default function SuperAdminDashboard() {
+  const { isSuperAdmin } = useAuthContext();
+  const { settings } = useSiteSettings();
   const [categories, setCategories] = useState<Category[]>([]);
   const [admins, setAdmins] = useState<AdminSummary[]>([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [loadingAdmins, setLoadingAdmins] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "elections" | "approvals">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "elections" | "approvals" | "moderators" | "settings">("overview");
+
+  const siteName = settings?.site_name || "MegaOdds";
+  const initial = siteName[0] || "M";
 
   // Category form state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -170,6 +177,17 @@ export default function SuperAdminDashboard() {
   const totalAvailable = categories.filter((c) => !c.is_assigned).length;
   const fullyAssigned = admins.filter((a) => a.categories.length >= 2).length;
 
+  // Tabs available based on role
+  const tabs = [
+    { key: "overview" as const, label: "Overview", icon: Users },
+    { key: "elections" as const, label: "Elections", icon: Vote },
+    { key: "approvals" as const, label: "Approvals", icon: UserCheck },
+    ...(isSuperAdmin ? [
+      { key: "moderators" as const, label: "Moderators", icon: Shield },
+      { key: "settings" as const, label: "Site Settings", icon: Settings },
+    ] : []),
+  ];
+
   return (
     <div className="min-h-screen flex w-full bg-background">
       {/* ── Categories Sidebar ── */}
@@ -179,7 +197,6 @@ export default function SuperAdminDashboard() {
           sidebarOpen ? "w-72" : "w-14"
         )}
       >
-        {/* Sidebar header */}
         <div className="flex items-center justify-between h-16 px-3 border-b border-sidebar-border">
           {sidebarOpen && (
             <div className="flex items-center gap-2 overflow-hidden">
@@ -201,8 +218,7 @@ export default function SuperAdminDashboard() {
           </button>
         </div>
 
-        {/* Add category form */}
-        {sidebarOpen && (
+        {sidebarOpen && isSuperAdmin && (
           <div className="px-3 py-3 border-b border-sidebar-border">
             <form onSubmit={handleAddCategory} className="flex gap-1.5">
               <Input
@@ -223,7 +239,6 @@ export default function SuperAdminDashboard() {
           </div>
         )}
 
-        {/* Category list */}
         <div className="flex-1 overflow-y-auto py-2">
           {loadingCats ? (
             <div className="flex justify-center py-8">
@@ -246,7 +261,6 @@ export default function SuperAdminDashboard() {
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent"
                 )}
               >
-                {/* Status dot */}
                 <div
                   className={cn(
                     "w-2 h-2 rounded-full shrink-0",
@@ -270,42 +284,29 @@ export default function SuperAdminDashboard() {
                       <span className="text-xs flex-1 truncate font-medium">{cat.name}</span>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      {editingId === cat.id ? (
-                        <>
-                          <button
-                            onClick={() => handleSaveEdit(cat.id)}
-                            className="p-1 rounded text-sidebar-primary hover:bg-sidebar-accent"
-                            disabled={saving}
-                          >
-                            <Check className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="p-1 rounded text-sidebar-foreground/60 hover:bg-sidebar-accent"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
-                            className="p-1 rounded text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(cat.id, cat.name)}
-                            disabled={cat.is_assigned}
-                            className="p-1 rounded text-sidebar-foreground/40 hover:text-destructive hover:bg-sidebar-accent disabled:opacity-30 disabled:cursor-not-allowed"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </>
-                      )}
-                    </div>
+                    {isSuperAdmin && (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                        {editingId === cat.id ? (
+                          <>
+                            <button onClick={() => handleSaveEdit(cat.id)} className="p-1 rounded text-sidebar-primary hover:bg-sidebar-accent" disabled={saving}>
+                              <Check className="w-3 h-3" />
+                            </button>
+                            <button onClick={() => setEditingId(null)} className="p-1 rounded text-sidebar-foreground/60 hover:bg-sidebar-accent">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="p-1 rounded text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent">
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                            <button onClick={() => handleDelete(cat.id, cat.name)} disabled={cat.is_assigned} className="p-1 rounded text-sidebar-foreground/40 hover:text-destructive hover:bg-sidebar-accent disabled:opacity-30 disabled:cursor-not-allowed">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -316,16 +317,15 @@ export default function SuperAdminDashboard() {
 
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
         <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="px-6 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-black text-sm select-none">
-                M
+                {initial}
               </div>
-              <span className="font-bold text-lg text-primary">MegaOdds</span>
+              <span className="font-bold text-lg text-primary">{siteName}</span>
               <span className="text-xs bg-primary/10 border border-primary/30 text-primary rounded-full px-2 py-0.5 font-medium">
-                Super Admin
+                {isSuperAdmin ? "Super Admin" : "Moderator"}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -345,12 +345,8 @@ export default function SuperAdminDashboard() {
 
         <main className="flex-1 px-6 py-8 space-y-6 overflow-y-auto">
           {/* Tabs */}
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
-            {([
-              { key: "overview", label: "Overview", icon: Users },
-              { key: "elections", label: "Elections", icon: Vote },
-              { key: "approvals", label: "Approvals", icon: UserCheck },
-            ] as const).map(({ key, label, icon: Icon }) => (
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit flex-wrap">
+            {tabs.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
@@ -366,114 +362,94 @@ export default function SuperAdminDashboard() {
           </div>
 
           {activeTab === "overview" && (
-          <>
-          {/* Page title */}
-          <div className="float-in">
-            <h1 className="text-3xl font-bold">
-              <span className="text-glow text-primary">Admin</span>{" "}Overview
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              View all admin assignments and category statistics
-            </p>
-          </div>
+            <>
+              <div className="float-in">
+                <h1 className="text-3xl font-bold">
+                  <span className="text-glow text-primary">Admin</span>{" "}Overview
+                </h1>
+                <p className="text-muted-foreground text-sm mt-1">
+                  View all admin assignments and category statistics
+                </p>
+              </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 float-in">
-            {[
-              { label: "Total Categories", value: categories.length, icon: Package },
-              { label: "Assigned", value: totalAssigned, icon: Check },
-              { label: "Available", value: totalAvailable, icon: Package },
-              { label: "Admins Done", value: `${fullyAssigned}/${admins.length}`, icon: Users },
-            ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-                  <Icon className="w-3.5 h-3.5" />
-                  {label}
-                </div>
-                <div className="text-2xl font-bold text-primary">{value}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Admin list */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search admins..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-muted border-border"
-                />
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { fetchAdmins(); fetchCategories(); }}
-                className="gap-1.5 text-muted-foreground"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Refresh
-              </Button>
-            </div>
-
-            {loadingAdmins ? (
-              <div className="flex justify-center py-16">
-                <Loader2 className="w-6 h-6 text-primary animate-spin" />
-              </div>
-            ) : filteredAdmins.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>{admins.length === 0 ? "No admins have logged in yet." : "No admins match your search."}</p>
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {filteredAdmins.map((admin) => (
-                  <div
-                    key={admin.user_id}
-                    className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold">
-                          {admin.first_name} {admin.last_name}
-                        </span>
-                        <span className={cn(
-                          "text-xs rounded-full px-2 py-0.5 font-medium border",
-                          admin.categories.length >= 2
-                            ? "bg-primary/10 border-primary/30 text-primary"
-                            : "bg-muted border-border text-muted-foreground"
-                        )}>
-                          {admin.categories.length}/2
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground space-y-0.5">
-                        <div>{admin.email}</div>
-                        {admin.whatsapp && <div>📱 {admin.whatsapp}</div>}
-                      </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 float-in">
+                {[
+                  { label: "Total Categories", value: categories.length, icon: Package },
+                  { label: "Assigned", value: totalAssigned, icon: Check },
+                  { label: "Available", value: totalAvailable, icon: Package },
+                  { label: "Admins Done", value: `${fullyAssigned}/${admins.length}`, icon: Users },
+                ].map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                      <Icon className="w-3.5 h-3.5" />
+                      {label}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {admin.categories.length === 0 ? (
-                        <span className="text-xs text-muted-foreground italic">No categories yet</span>
-                      ) : (
-                        admin.categories.map((cat) => (
-                          <span
-                            key={cat.id}
-                            className="flex items-center gap-1.5 text-xs bg-primary/10 border border-primary/30 text-primary rounded-lg px-3 py-1.5 font-medium"
-                          >
-                            <Package className="w-3 h-3" />
-                            {cat.name}
-                          </span>
-                        ))
-                      )}
-                    </div>
+                    <div className="text-2xl font-bold text-primary">{value}</div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-          </>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search admins..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 bg-muted border-border"
+                    />
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => { fetchAdmins(); fetchCategories(); }} className="gap-1.5 text-muted-foreground">
+                    <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                  </Button>
+                </div>
+
+                {loadingAdmins ? (
+                  <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+                ) : filteredAdmins.length === 0 ? (
+                  <div className="text-center py-16 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>{admins.length === 0 ? "No admins have logged in yet." : "No admins match your search."}</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {filteredAdmins.map((admin) => (
+                      <div key={admin.user_id} className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold">{admin.first_name} {admin.last_name}</span>
+                            <span className={cn(
+                              "text-xs rounded-full px-2 py-0.5 font-medium border",
+                              admin.categories.length >= 2
+                                ? "bg-primary/10 border-primary/30 text-primary"
+                                : "bg-muted border-border text-muted-foreground"
+                            )}>
+                              {admin.categories.length}/2
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground space-y-0.5">
+                            <div>{admin.email}</div>
+                            {admin.whatsapp && <div>📱 {admin.whatsapp}</div>}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {admin.categories.length === 0 ? (
+                            <span className="text-xs text-muted-foreground italic">No categories yet</span>
+                          ) : (
+                            admin.categories.map((cat) => (
+                              <span key={cat.id} className="flex items-center gap-1.5 text-xs bg-primary/10 border border-primary/30 text-primary rounded-lg px-3 py-1.5 font-medium">
+                                <Package className="w-3 h-3" /> {cat.name}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {activeTab === "elections" && (
@@ -493,6 +469,26 @@ export default function SuperAdminDashboard() {
               </h1>
               <p className="text-muted-foreground text-sm mb-6">Approve or reject users requesting to vote</p>
               <VoterApprovalManager />
+            </div>
+          )}
+
+          {activeTab === "moderators" && isSuperAdmin && (
+            <div className="float-in">
+              <h1 className="text-3xl font-bold mb-1">
+                <span className="text-glow text-primary">Moderator</span>{" "}Management
+              </h1>
+              <p className="text-muted-foreground text-sm mb-6">Assign admins as moderators with election management permissions</p>
+              <ModeratorManager />
+            </div>
+          )}
+
+          {activeTab === "settings" && isSuperAdmin && (
+            <div className="float-in">
+              <h1 className="text-3xl font-bold mb-1">
+                <span className="text-glow text-primary">Site</span>{" "}Settings
+              </h1>
+              <p className="text-muted-foreground text-sm mb-6">Manage site name and display mode</p>
+              <SiteSettingsManager />
             </div>
           )}
         </main>

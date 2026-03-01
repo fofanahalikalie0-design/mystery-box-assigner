@@ -102,6 +102,38 @@ export type Database = {
         }
         Relationships: []
       }
+      device_votes: {
+        Row: {
+          created_at: string
+          device_id: string
+          election_id: string
+          id: string
+          voter_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          election_id: string
+          id?: string
+          voter_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          election_id?: string
+          id?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_votes_election_id_fkey"
+            columns: ["election_id"]
+            isOneToOne: false
+            referencedRelation: "elections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       elections: {
         Row: {
           created_at: string
@@ -162,6 +194,30 @@ export type Database = {
           updated_at?: string
           user_id?: string
           whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          id: string
+          site_mode: string
+          site_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          site_mode?: string
+          site_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          site_mode?: string
+          site_name?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }

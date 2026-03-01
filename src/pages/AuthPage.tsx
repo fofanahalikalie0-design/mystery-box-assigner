@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
 import { dbUpsertProfile, dbAssignAdminRole, dbAssignSuperAdminRole } from "@/lib/db";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 // Shared credentials gate
 const ADMIN_USERNAME = "MEGA";
@@ -18,6 +19,9 @@ const SUPER_ADMIN_EMAIL = "megaodds@megaodds.admin";
 type Step = "gate" | "register";
 
 export default function AuthPage() {
+  const { settings } = useSiteSettings();
+  const siteName = settings?.site_name || "MegaOdds";
+  const initial = siteName[0] || "M";
   const [step, setStep] = useState<Step>("gate");
   const [gateUsername, setGateUsername] = useState("");
   const [gatePassword, setGatePassword] = useState("");
@@ -132,10 +136,10 @@ export default function AuthPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-primary-foreground glow-primary mb-4">
-            <span className="text-3xl font-black select-none">M</span>
+            <span className="text-3xl font-black select-none">{initial}</span>
           </div>
-          <h1 className="text-3xl font-bold text-glow text-primary">MegaOdds</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Category Assignment Portal</p>
+          <h1 className="text-3xl font-bold text-glow text-primary">{siteName}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Admin Portal</p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-8 shadow-2xl">
@@ -199,7 +203,7 @@ export default function AuthPage() {
                 <h2 className="text-lg font-semibold">Your Details</h2>
               </div>
               <p className="text-xs text-muted-foreground mb-6">
-                MegaOdds is happy to have you as admin. Please fill in your information.
+                {siteName} is happy to have you as admin. Please fill in your information.
               </p>
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
