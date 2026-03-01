@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useCountdown } from "@/hooks/useCountdown";
 import { cn } from "@/lib/utils";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 interface Category {
   id: string;
@@ -35,6 +36,9 @@ const LOGOUT_AFTER_DONE_SECONDS = 5 * 60; // 5 minutes
 
 export default function Dashboard() {
   const { user, profile } = useAuthContext();
+  const { settings } = useSiteSettings();
+  const siteName = settings?.site_name || "MegaOdds";
+  const initial = siteName[0] || "M";
   const [categories, setCategories] = useState<Category[]>([]);
   const [assignedCategories, setAssignedCategories] = useState<RevealedCategory[]>([]);
   const [revealedBoxes, setRevealedBoxes] = useState<Record<string, string>>({});
@@ -161,9 +165,9 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-black text-sm select-none">
-              M
+              {initial}
             </div>
-            <span className="font-bold text-lg text-primary">MegaOdds</span>
+            <span className="font-bold text-lg text-primary">{siteName}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -239,7 +243,7 @@ export default function Dashboard() {
                 </h1>
                 {canPick && (
                   <p className="text-muted-foreground text-sm">
-                    MegaOdds is happy to have you as admin. Pick{" "}
+                    {siteName} is happy to have you as admin. Pick{" "}
                     <span className="text-primary font-semibold">{2 - assignedCategories.length}</span>{" "}
                     {2 - assignedCategories.length === 1 ? "category" : "categories"} from the mystery boxes below.
                   </p>

@@ -16,7 +16,7 @@ import { Loader2 } from "lucide-react";
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { user, isSuperAdmin, loading } = useAuthContext();
+  const { user, isSuperAdmin, isModerator, loading } = useAuthContext();
 
   if (loading) {
     return (
@@ -33,6 +33,7 @@ function AppRoutes() {
         element={
           !user ? <LandingPage /> :
           isSuperAdmin ? <Navigate to="/super-admin" replace /> :
+          isModerator ? <Navigate to="/super-admin" replace /> :
           <Navigate to="/dashboard" replace />
         }
       />
@@ -41,6 +42,7 @@ function AppRoutes() {
         element={
           !user ? <AuthPage /> :
           isSuperAdmin ? <Navigate to="/super-admin" replace /> :
+          isModerator ? <Navigate to="/super-admin" replace /> :
           <Navigate to="/dashboard" replace />
         }
       />
@@ -49,6 +51,7 @@ function AppRoutes() {
         element={
           !user ? <Navigate to="/login" replace /> :
           isSuperAdmin ? <Navigate to="/super-admin" replace /> :
+          isModerator ? <Navigate to="/super-admin" replace /> :
           <Dashboard />
         }
       />
@@ -56,7 +59,7 @@ function AppRoutes() {
         path="/super-admin"
         element={
           !user ? <Navigate to="/login" replace /> :
-          !isSuperAdmin ? <Navigate to="/dashboard" replace /> :
+          (!isSuperAdmin && !isModerator) ? <Navigate to="/dashboard" replace /> :
           <SuperAdminDashboard />
         }
       />
